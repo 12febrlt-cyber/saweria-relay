@@ -50,7 +50,7 @@ function validateApiKey(req, res) {
 // agar Roblox bisa memverifikasi data tidak diubah di tengah jalan.
 // ============================================================
 function signBody(bodyString) {
-  return crypto.createHmac("sha256", API_KEY).update(bodyString).digest("hex");
+  return crypto.createHmac("sha256", API_KEY).update(bodyString).digest("base64");
 }
 
 function sendSigned(res, payload) {
