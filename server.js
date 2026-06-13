@@ -4,7 +4,7 @@ const app = express();
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const SAWERIA_WEBHOOK_TOKEN = process.env.SAWERIA_WEBHOOK_TOKEN || "";
 const API_KEY = process.env.API_KEY || "ganti-dengan-api-key-rahasia";
 
