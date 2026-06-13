@@ -70,6 +70,26 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", uptime: Math.floor(process.uptime()), pending: pendingDonations.length });
 });
 
+// ============================================================
+// TAMBAHAN: Endpoint /tiers
+// Letakkan di server.js, sebelum app.listen(...)
+// ============================================================
+
+// Daftar nominal donasi yang disarankan (tampil sebagai tombol di Roblox)
+const DONATION_TIERS = [
+  { id: 1, amount: 10000 },
+  { id: 2, amount: 25000 },
+  { id: 3, amount: 50000 },
+  { id: 4, amount: 100000 },
+  { id: 5, amount: 500000 },
+  { id: 6, amount: 1000000 },
+];
+
+app.get("/tiers", (req, res) => {
+  if (!validateApiKey(req, res)) return;
+  res.json({ tiers: DONATION_TIERS });
+});
+
 app.get("/", (req, res) => {
   res.json({ message: "Saweria Relay Server aktif" });
 });
