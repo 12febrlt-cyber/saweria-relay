@@ -12,6 +12,16 @@ const pendingDonations = [];
 const donationHistory = [];
 const MAX_HISTORY = 100;
 
+// Daftar nominal donasi yang disarankan (tampil sebagai tombol di Roblox)
+const DONATION_TIERS = [
+  { id: 1, amount: 10000 },
+  { id: 2, amount: 25000 },
+  { id: 3, amount: 50000 },
+  { id: 4, amount: 100000 },
+  { id: 5, amount: 500000 },
+  { id: 6, amount: 1000000 },
+];
+
 function verifySignature(req) {
   if (!SAWERIA_WEBHOOK_TOKEN) return true;
   const signature = req.headers["x-saweria-webhook-signature"];
@@ -33,6 +43,20 @@ function validateApiKey(req, res) {
     return false;
   }
   return true;
+}
+
+// ============================================================
+// Tandatangani response dengan HMAC-SHA256 (X-Signature header)
+// agar Roblox bisa memverifikasi data tidak diubah di tengah jalan.
+// ============================================================
+function signBody(bodyString) {
+  return crypto.createHmac("sha256", API_KEY).update(bodyString).digest("hex");
+}
+
+function sendSigned(res, payload) {
+  const bodyString = JSON.stringify(payload);
+  res.set("X-Signature", signBody(bodyString));
+  res.type("application/json").send(bodyString);
 }
 
 app.post("/webhook/saweria", (req, res) => {
@@ -57,7 +81,7 @@ app.post("/webhook/saweria", (req, res) => {
 app.get("/donations", (req, res) => {
   if (!validateApiKey(req, res)) return;
   const toSend = pendingDonations.splice(0, pendingDonations.length);
-  res.json({ donations: toSend, count: toSend.length });
+  sendSigned(res, { donations: toSend, count: toSend.length });
 });
 
 app.get("/donations/history", (req, res) => {
@@ -66,28 +90,13 @@ app.get("/donations/history", (req, res) => {
   res.json({ donations: donationHistory.slice(0, limit), total: donationHistory.length });
 });
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", uptime: Math.floor(process.uptime()), pending: pendingDonations.length });
-});
-
-// ============================================================
-// TAMBAHAN: Endpoint /tiers
-// Letakkan di server.js, sebelum app.listen(...)
-// ============================================================
-
-// Daftar nominal donasi yang disarankan (tampil sebagai tombol di Roblox)
-const DONATION_TIERS = [
-  { id: 1, amount: 10000 },
-  { id: 2, amount: 25000 },
-  { id: 3, amount: 50000 },
-  { id: 4, amount: 100000 },
-  { id: 5, amount: 500000 },
-  { id: 6, amount: 1000000 },
-];
-
 app.get("/tiers", (req, res) => {
   if (!validateApiKey(req, res)) return;
-  res.json({ tiers: DONATION_TIERS });
+  sendSigned(res, { tiers: DONATION_TIERS });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", uptime: Math.floor(process.uptime()), pending: pendingDonations.length });
 });
 
 app.get("/", (req, res) => {
